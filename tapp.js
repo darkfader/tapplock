@@ -2,6 +2,18 @@
  * Unlock TAPP One
  *
  * TODO: camelCase it (I'm no JavaScript programmer...)
+ *
+ * Install/run:
+ *   npm install
+ *   node tapp
+ *
+ * on macOS, I had to install nodejs version 8.
+ * brew install node@8
+ * brew link --overwrite --force node@8
+ * npm install noble
+ * If it still doesn't work, try:
+ *   npm config set python /usr/local/bin/python2.7
+ *   rm -rf $HOME/.node-gyp
  */
 
 require('use-strict');
@@ -9,15 +21,13 @@ require('use-strict');
 
 const noble  = require('noble');
 const assert = require('assert');
+const md5 = require('md5');
 
 const values   = require('./values.js');
 const commands = values.commands;
 //const responses = values.responses;
 
 const FIRSTPAIRKEY = [ 0xae, 0x95, 0x66, 0xc7 ];
-let serial_number  = [ 0, 0, 0, 0 ]; // get via PAIRING_FIRST_TIME
-const key1         = [ 0x11, 0x11, 0x11, 0x11 ];
-const key2         = [ 0x22, 0x22, 0x22, 0x22 ];
 
 function command_to_data(command, command2, parameters) {
     var data = [];
@@ -295,18 +305,31 @@ function discover_cb(peripheral) {
                 }
             }
 
-            queue_command(commands.PAIRING_REGULAR, [ 0x11, 0x11, 0x11, 0x11, 0xb5, 0x59, 0x08, 0xd0 ], function(parameters) {
+            // get MD5 over MAC address string. e.g.:
+			//   DE:44:B3:69:30:C2
+			//   499D27CBB0487709B55908D076BD5A87
+			// 0x499D27CB key1
+			//         0xB0487709 key2
+			//                 0xb55908d0 serial
+			//                         0x76BD5A87 unused?
+
+			var x = peripheral.address.toUpperCase().split(':').reverse().join(':');
+			const blaat = Buffer.from(md5(x), "hex");
+			var key1           = [...blaat.slice(0, 4)];
+			var key2           = [...blaat.slice(4, 8)];
+			var serial_number  = [...blaat.slice(8, 12)];
+            console.log('key1', key1, 'key2', key2, 'serial', serial_number);
+
+            queue_command(commands.PAIRING_REGULAR, key1.concat(serial_number), function(parameters) {
                 console.log('PAIRING_REGULAR result', parameters);
 
-                console.log('ITS TIME TO OPEN!');
                 queue_command(commands.UNLOCK, [], function(parameters) {
+                	console.log('opened :)');
                     peripheral.disconnect();
                     // data_char.unsubscribe();
                 });
 
                 queue_command(commands.DISCONNECT);
-
-
 
                 // or just do whatever you want here...
 

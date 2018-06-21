@@ -1,0 +1,23 @@
+{
+  "name": "tapp",
+  "version": "1.0.0",
+  "description": "TappLock",
+  "main": "tapp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rafael Vuijk",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint-config-google": "^0.9.1"
+  },
+  "config": {
+    "engine-strict": true
+  },
+  "dependencies": {
+    "md5": "^2.2.1",
+    "noble": "^1.9.1",
+    "npm": "^6.1.0",
+    "use-strict": "^1.0.1"
+  }
+}
